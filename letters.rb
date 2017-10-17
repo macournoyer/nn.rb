@@ -1,97 +1,46 @@
-require_relative "nn"
-
-# 4x5 "images" of letters
-
-letters = {
-  A: [
-    0, 1, 1, 0,
-    1, 0, 0, 1,
-    1, 0, 0, 1,
-    1, 1, 1, 1,
-    1, 0, 0, 1
-  ].to_v,
-
-  B: [
-    1, 1, 1, 0,
-    1, 0, 0, 1,
-    1, 1, 1, 0,
-    1, 0, 0, 1,
-    1, 1, 1, 0
-  ].to_v,
-
-  C: [
-    1, 1, 1, 1,
-    1, 0, 0, 0,
-    1, 0, 0, 0,
-    1, 0, 0, 0,
-    1, 1, 1, 1
-  ].to_v,
-
-  D: [
-    1, 1, 1, 0,
-    1, 0, 0, 1,
-    1, 0, 0, 1,
-    1, 0, 0, 1,
-    1, 1, 1, 0
-  ].to_v,
-}
-
 # Make rand deterministic, for testing purposes
 srand 0
 
-
-## Create the network
-
-inputs_count = 20 # Image size: 4x5
-hiddens_count = 10
-outputs_count = 4
+################ 1. Create the network ################
+require_relative "nn"
 
 network = Network.new(
-  Layer.new(inputs_count, hiddens_count),
-  Layer.new(hiddens_count, outputs_count)
+  Layer.new(20, 10),
+  Layer.new(10, 4)
 )
 
-
-## Training
+################ 2. Train the network ################
+require_relative "data"
 
 examples = [
-  #                   outputs
-  #    inputs        A  B  C  D
-  [  letters[:A],  [ 1, 0, 0, 0 ].to_v  ],
-  [  letters[:B],  [ 0, 1, 0, 0 ].to_v  ],
-  [  letters[:C],  [ 0, 0, 1, 0 ].to_v  ],
-  [  letters[:D],  [ 0, 0, 0, 1 ].to_v  ],
+  #                            OUTPUTS
+  #        INPUTS             A  B  C  D
+  [  LETTER_TO_PIXELS[:A],  [ 1, 0, 0, 0 ].to_v  ],
+  [  LETTER_TO_PIXELS[:B],  [ 0, 1, 0, 0 ].to_v  ],
+  [  LETTER_TO_PIXELS[:C],  [ 0, 0, 1, 0 ].to_v  ],
+  [  LETTER_TO_PIXELS[:D],  [ 0, 0, 0, 1 ].to_v  ],
 ]
 
-(1..1000).each do |epoch|
-
+1000.times do
   examples.each do |inputs, expected_outputs|
-    # Forward pass (evaluate / predict)
     actual_outputs = network.forward(inputs)
 
-    # Compute the errors. By how much did we miss?
     errors = actual_outputs - expected_outputs
 
-    # Back-propagate the errors
     network.back_propagate errors
-
-    # Update the weights
     network.update_weights
   end
-
 end
 
-
-## Evaluating the network
+################ 3. Test the network ################
 
 inputs = [
   1, 1, 1, 0,
-  1, 0, 0, 0,
-  1, 0, 0, 0,
-  1, 0, 0, 0,
+  1, 0, 0, 1,
+  1, 0, 0, 1,
+  1, 0, 0, 1,
   1, 1, 1, 1
 ].to_v
-outputs = network.forward(inputs)
 
 # Draw the inputs
 puts
@@ -99,6 +48,8 @@ inputs.each_slice(4) do |line|
   puts line.map { |pixel| pixel == 1 ? ' *' : '  ' }.join
 end
 puts
+
+outputs = network.forward(inputs)
 
 # Print the output (prediction) for each letter
 %w( A B C D ).zip(outputs).each do |letter, output|
